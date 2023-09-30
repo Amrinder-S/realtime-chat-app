@@ -1,7 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
-import requests
-url = 'http://192.168.1.25/samp'
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -21,7 +19,6 @@ def update_message_post():
     new_message = request.form.get('new_message')
     if new_message:
         message = new_message
-        #response = requests.post(url, data=message, headers={'Priority': 'high'})
         socketio.emit('message_updated', message)
         return jsonify({"message": "Message updated successfully"})
     else:
