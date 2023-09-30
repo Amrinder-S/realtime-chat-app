@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Socket.IO Example</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 10px;
+            background-color: #0084ff;
+            color: white;
+            margin: 0;
+        }
+
+        #message-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: scroll;
+            max-height: 400px; /* Adjust as needed */
+        }
+
+        #message-list li {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin: 5px 10px;
+            padding: 10px;
+            clear: both;
+            display: flex;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        #message-list li::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        #message-list li.sent {
+            background-color: #0084ff;
+            color: white;
+            float: right;
+        }
+
+        #message-form {
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #ddd;
+        }
+
+        #new-message {
+            width: 70%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Messages:</h1>
+    <ul id="message-list">
+        <!-- Messages will be appended here -->
+    </ul>
+    <form id="message-form">
+        <input type="text" id="new-message" placeholder="Enter a new message">
+        <button type="submit">Send</button>
+    </form>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        var messageList = document.getElementById('message-list');
+
+        // Function to append a new message to the list
+    function appendMessage(message) {
+        var listItem = document.createElement('li');
+        listItem.textContent = message;
+        messageList.appendChild(listItem);
+	showNotification(message)
+        // Scroll to the bottom after adding a new message
+        messageList.scrollTop = messageList.scrollHeight;
+    }
+
+    // Function to update the message in real-time
+    socket.on('message_updated', function (message) {
+        appendMessage(message);
+    });
+
+
+        // Function to send a new message to the server via POST request
+        document.getElementById('message-form').onsubmit = function (e) {
+            e.preventDefault();
+            var newMessage = document.getElementById('new-message').value;
+            
+            // Send a POST request to the server
+            fetch('/update_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'new_message=' + encodeURIComponent(newMessage),
+            }).then(function (response) {
+                if (response.ok) {
+                    // Message sent successfully
+                    document.getElementById('new-message').value = ''; // Clear the input field
+                } else {
+                    console.error('Failed to send message');
+                }
+            });
+        };
+
+// Function to display a browser notification
+function showNotification(message) {
+    if (Notification.permission === 'granted') {
+        new Notification('New Message', {
+            body: message,
+        });
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (permission) {
+            if (permission === 'granted') {
+                new Notification('New Message', {
+                    body: message,
+                });
+            }
+        });
+    }
+}
+
+    </script>
+</body>
+</html>
