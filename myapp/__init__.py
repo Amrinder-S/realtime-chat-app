@@ -1,12 +1,14 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Blueprint
 from flask_socketio import SocketIO
 
 def create_app():
-	app = Flask(__name__)
-	return app
-socketio = SocketIO(create_app())
+    app = Flask(__name__)
+    app.register_blueprint(main)
+    return app
+main = Blueprint('main', __name__)
+socketio = SocketIO()
 
-@create_app().route('/')
+@main.route('/')
 def index():
     return render_template('index.html')
 
@@ -16,7 +18,7 @@ def update_message(new_message):
     message = new_message
     socketio.emit('message_updated', message)
 
-@create_app().route('/update_message', methods=['POST'])
+@main.route('/update_message', methods=['POST'])
 def update_message_post():
     global message
     new_message = request.form.get('new_message')
@@ -29,4 +31,6 @@ def update_message_post():
 
 
 if __name__ == '__main__':
-    socketio.run(create_app(), debug=False, host='0.0.0.0')
+    app = create_app()
+    socketio.init_app(app)
+    socketio.run(app, debug=False, host='0.0.0.0')
